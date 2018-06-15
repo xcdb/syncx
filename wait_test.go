@@ -11,10 +11,7 @@ import (
 func TestWaitAny(t *testing.T) {
 	e1 := syncx.NewAutoResetEvent(false)
 	e2 := syncx.NewManualResetEvent(false)
-	e3 := syncx.NewSemaphore(3)
-
-	e3.Wait()
-	e3.Wait()
+	e3 := syncx.NewSemaphore(1)
 	e3.Wait()
 
 	step := make(chan int, 1)
