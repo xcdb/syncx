@@ -2,8 +2,6 @@ package syncx
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 //TestManualResetEvent_1 ensures that Wait blocks if not signaled
@@ -57,6 +55,7 @@ func TestManualResetEvent_3(t *testing.T) {
 	}
 }
 
+/*
 func TestNewManualResetEvent_SetsState(t *testing.T) {
 	state := []bool{false, true}
 	for _, b := range state {
@@ -82,3 +81,4 @@ func TestManualResetEvent_Wait_LeavesStateAsTrue(t *testing.T) {
 	e.Wait()
 	assert.True(t, e.state)
 }
+*/

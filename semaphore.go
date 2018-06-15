@@ -1,11 +1,12 @@
 package syncx
 
-import "sync"
+import (
+	"context"
+)
 
 //Semaphore limits the number of goroutines that can access a resource or pool of resources concurrently.
 type Semaphore struct {
-	count int
-	cond  *sync.Cond
+	c chan struct{}
 }
 
 //NewSemaphore returns a new Semaphore with count c
@@ -15,27 +16,32 @@ func NewSemaphore(c int) *Semaphore {
 	if c < 1 {
 		panic("syncx: NewSemaphore c is less than 1")
 	}
-	cond := sync.NewCond(&sync.Mutex{})
-	return &Semaphore{
-		count: c,
-		cond:  cond,
+	s := Semaphore{
+		c: make(chan struct{}, c),
 	}
-}
-
-//Wait suspends execution of the calling goroutine until it can enter s.
-func (s *Semaphore) Wait() {
-	s.cond.L.Lock()
-	for s.count <= 0 {
-		s.cond.Wait()
+	for i := 0; i < c; i++ {
+		s.c <- struct{}{}
 	}
-	s.count--
-	s.cond.L.Unlock()
+	return &s
 }
 
 //Release exits s, waking a waiting goroutine.
 func (s *Semaphore) Release() {
-	s.cond.L.Lock()
-	s.count++
-	s.cond.L.Unlock()
-	s.cond.Signal()
+	s.c <- struct{}{}
+}
+
+//Wait suspends execution of the calling goroutine until it can enter s.
+func (s *Semaphore) Wait() {
+	<-s.c
+}
+
+//WaitContext suspends execution of the calling goroutine until e receives a signal, or until the context is cancelled.
+//The returned error is nil if e received a signal, or ctx.Err()
+func (s *Semaphore) WaitContext(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-s.c:
+		return nil
+	}
 }

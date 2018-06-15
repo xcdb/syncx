@@ -68,6 +68,8 @@ func TestAutoResetEvent_3(t *testing.T) {
 	}
 }
 
+//TODO: rename these to match implementation
+
 func TestNewAutoResetEvent_SetsState(t *testing.T) {
 	state := []bool{false, true}
 	for _, b := range state {

@@ -42,7 +42,7 @@ func TestNewSemaphore_SetsCount(t *testing.T) {
 	count := []int{1, 42, 1024}
 	for _, c := range count {
 		s := NewSemaphore(c)
-		assert.Equal(t, c, s.count)
+		assert.Equal(t, c, len(s.c))
 	}
 }
 
