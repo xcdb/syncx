@@ -13,6 +13,10 @@ func TestWaitAny(t *testing.T) {
 	e2 := syncx.NewManualResetEvent(false)
 	e3 := syncx.NewSemaphore(3)
 
+	e3.Wait()
+	e3.Wait()
+	e3.Wait()
+
 	step := make(chan int, 1)
 	go func() {
 		step <- 1
@@ -21,6 +25,12 @@ func TestWaitAny(t *testing.T) {
 	}()
 
 	<-step //1
+	select {
+	case <-step:
+		assert.Fail(t, "shouldn't be signalled")
+	default:
+	}
+	e3.Release()
 	<-step //2
 }
 
@@ -41,7 +51,7 @@ func TestWaitAll(t *testing.T) {
 	e1.Signal() //checking that each only counts once
 	select {
 	case <-step:
-		assert.Fail(t, "e2 not signalled")
+		assert.Fail(t, "shouldn't be signalled")
 	default:
 	}
 	e2.Signal()
