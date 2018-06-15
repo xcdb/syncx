@@ -72,24 +72,28 @@ func TestNewAutoResetEvent_SetsState(t *testing.T) {
 	state := []bool{false, true}
 	for _, b := range state {
 		e := NewAutoResetEvent(b)
-		assert.Equal(t, b, e.state)
+		s := len(e.c) == 1
+		assert.Equal(t, b, s)
 	}
 }
 
 func TestAutoResetEvent_Signal_SetsStateToTrue(t *testing.T) {
 	e := NewAutoResetEvent(false)
 	e.Signal()
-	assert.True(t, e.state)
+	s := len(e.c) == 1
+	assert.True(t, s)
 }
 
 func TestAutoResetEvent_Reset_SetsStateToFalse(t *testing.T) {
 	e := NewAutoResetEvent(true)
 	e.Reset()
-	assert.False(t, e.state)
+	s := len(e.c) == 1
+	assert.False(t, s)
 }
 
 func TestAutoResetEvent_Wait_SetsStateToFalse(t *testing.T) {
 	e := NewAutoResetEvent(true)
 	e.Wait()
-	assert.False(t, e.state)
+	s := len(e.c) == 1
+	assert.False(t, s)
 }
