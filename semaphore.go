@@ -26,8 +26,12 @@ func NewSemaphore(c int) *Semaphore {
 }
 
 //Release exits s, waking a waiting goroutine.
+//
+//If the Semaphore reaches maximum capacity, further calls to Release are ignored.
 func (s *Semaphore) Release() {
-	s.c <- struct{}{}
+	if len(s.c) < cap(s.c) {
+		s.c <- struct{}{}
+	}
 }
 
 //Wait suspends execution of the calling goroutine until it can enter s.
@@ -36,6 +40,7 @@ func (s *Semaphore) Wait() {
 }
 
 //WaitContext suspends execution of the calling goroutine until e receives a signal, or until the context is cancelled.
+//
 //The returned error is nil if e received a signal, or ctx.Err()
 func (s *Semaphore) WaitContext(ctx context.Context) error {
 	select {
@@ -44,4 +49,8 @@ func (s *Semaphore) WaitContext(ctx context.Context) error {
 	case <-s.c:
 		return nil
 	}
+}
+
+func (s *Semaphore) ch() chan struct{} {
+	return s.c
 }

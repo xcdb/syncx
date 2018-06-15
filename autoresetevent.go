@@ -62,3 +62,7 @@ func (e *AutoResetEvent) WaitContext(ctx context.Context) error {
 		return nil
 	}
 }
+
+func (e *AutoResetEvent) ch() chan struct{} {
+	return e.c
+}
