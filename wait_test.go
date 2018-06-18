@@ -56,16 +56,31 @@ func TestWaitAll(t *testing.T) {
 	<-step //2
 }
 
-func TestWaitAny_panics(t *testing.T) {
-	assert.Panics(t, func() { syncx.WaitAny() })
-	assert.Panics(t, func() { syncx.WaitAnyContext(context.Background()) })
-
+func TestWaitAny_panicsWhenTooLong(t *testing.T) {
 	ws := make([]syncx.WaitHandle, 9, 9)
 	for i := 0; i < len(ws); i++ {
 		ws[i] = syncx.NewAutoResetEvent(false)
 	}
 	assert.Panics(t, func() { syncx.WaitAny(ws...) })
+}
+
+func TestWaitAnyContext_panicsWhenTooMany(t *testing.T) {
+	ws := make([]syncx.WaitHandle, 9, 9)
+	for i := 0; i < len(ws); i++ {
+		ws[i] = syncx.NewAutoResetEvent(false)
+	}
 	assert.Panics(t, func() { syncx.WaitAnyContext(context.Background(), ws...) })
+}
+
+func TestWaitAny_returnsNegative1WhenEmpty(t *testing.T) {
+	ix := syncx.WaitAny()
+	assert.Equal(t, -1, ix)
+}
+
+func TestWaitAnyContext_returnsNegative1WhenEmpty(t *testing.T) {
+	ix, err := syncx.WaitAnyContext(context.Background())
+	assert.Equal(t, -1, ix)
+	assert.Nil(t, err)
 }
 
 func TestWaitAny_returnsIndexThatSatisfiedWait(t *testing.T) {

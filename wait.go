@@ -14,11 +14,14 @@ var _Ø = make(chan struct{}, 1)
 //WaitAny suspends execution of the calling goroutine until any handle receives a signal.
 //
 //Returns the array index of the handle that satisified the wait.
+//If no handles are provided, returns -1.
 func WaitAny(whs ...WaitHandle) int {
 	if len(whs) > 8 {
 		panic("Too many waithandles")
-	} else if len(whs) == 0 {
-		panic("No waithandles")
+	}
+
+	if len(whs) == 0 {
+		return -1
 	}
 
 	cs := [8]chan struct{}{_Ø, _Ø, _Ø, _Ø, _Ø, _Ø, _Ø, _Ø}
@@ -49,11 +52,14 @@ func WaitAny(whs ...WaitHandle) int {
 //WaitAnyContext suspends execution of the calling goroutine until any handle receives a signal, or until the context is cancelled.
 //
 //Returns the array index of the handle that satisified the wait, or -1 and ctx.Err() if the context was cancelled.
+//If no handles are provided, returns -1 with nil error.
 func WaitAnyContext(ctx context.Context, whs ...WaitHandle) (int, error) {
 	if len(whs) > 8 {
 		panic("Too many waithandles")
-	} else if len(whs) == 0 {
-		panic("No waithandles")
+	}
+
+	if len(whs) == 0 {
+		return -1, nil
 	}
 
 	cs := [8]chan struct{}{_Ø, _Ø, _Ø, _Ø, _Ø, _Ø, _Ø, _Ø}
@@ -91,8 +97,10 @@ func WaitAnyContext(ctx context.Context, whs ...WaitHandle) (int, error) {
 func WaitAll(whs ...WaitHandle) bool {
 	if len(whs) > 8 {
 		panic("Too many waithandles")
-	} else if len(whs) == 0 {
-		panic("No waithandles")
+	}
+
+	if len(whs) == 0 {
+		return true
 	}
 
 	cs := [8]chan struct{}{_Ø, _Ø, _Ø, _Ø, _Ø, _Ø, _Ø, _Ø}
@@ -135,8 +143,10 @@ func WaitAll(whs ...WaitHandle) bool {
 func WaitAllContext(ctx context.Context, whs ...WaitHandle) (bool, error) {
 	if len(whs) > 8 {
 		panic("Too many waithandles")
-	} else if len(whs) == 0 {
-		panic("No waithandles")
+	}
+
+	if len(whs) == 0 {
+		return true, nil
 	}
 
 	cs := [8]chan struct{}{_Ø, _Ø, _Ø, _Ø, _Ø, _Ø, _Ø, _Ø}
