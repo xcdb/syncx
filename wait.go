@@ -110,7 +110,7 @@ func WaitAll(whs ...WaitHandle) bool {
 		m = m | (1 << uint(i))
 	}
 
-	var i int
+	var i uint
 	for {
 		select {
 		case <-cs[0]:
@@ -131,7 +131,7 @@ func WaitAll(whs ...WaitHandle) bool {
 			i = 7
 		}
 
-		m = m &^ (1 << uint(i))
+		m = m &^ (1 << i)
 		cs[i] = _Ø
 
 		if m == 0 {
@@ -161,7 +161,7 @@ func WaitAllContext(ctx context.Context, whs ...WaitHandle) (bool, error) {
 		m = m | (1 << uint(i))
 	}
 
-	var i int
+	var i uint
 	for {
 		select {
 		case <-ctx.Done():
@@ -184,7 +184,7 @@ func WaitAllContext(ctx context.Context, whs ...WaitHandle) (bool, error) {
 			i = 7
 		}
 
-		m = m &^ (1 << uint(i))
+		m = m &^ (1 << i)
 		cs[i] = _Ø
 
 		if m == 0 {
