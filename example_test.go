@@ -39,7 +39,6 @@ func ExampleAutoResetEvent() {
 
 func ExampleAutoResetEvent_WaitContext() {
 	ctx, cancel := context.WithCancel(context.Background())
-
 	ready := sync.WaitGroup{}
 	ready.Add(3)
 	done := make(chan bool, 3)

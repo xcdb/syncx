@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-//WaitHandle represents any of AutoResetEvent, ManualResetEvent and Semaphore
+//WaitHandle represents any of AutoResetEvent, ManualResetEvent, Semaphore
 type WaitHandle interface {
 	ch() chan struct{}
 }
