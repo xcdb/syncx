@@ -1,6 +1,7 @@
 package syncx_test
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -34,6 +35,54 @@ func ExampleAutoResetEvent() {
 
 	//...
 
+}
+
+func ExampleAutoResetEvent_WaitContext() {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	ready := sync.WaitGroup{}
+	ready.Add(3)
+	done := make(chan bool, 3)
+
+	//create event in a non-signaled state
+	e := syncx.NewAutoResetEvent(false)
+
+	//start a bunch of goroutines
+	for i := 1; i <= 3; i++ {
+		go func() {
+			ready.Done()
+			//...
+			err := e.WaitContext(ctx)
+			if err == nil {
+				fmt.Print("Signalled\n")
+			} else if err == context.Canceled { //ctx.Err()
+				fmt.Print("Cancelled\n")
+			}
+			//...
+			done <- true
+		}()
+	}
+
+	ready.Wait()
+
+	//signal the event and release a goroutine
+	e.Signal()
+
+	//release another
+	e.Signal()
+
+	<-done
+	<-done
+
+	//cancel the context
+	cancel()
+
+	<-done
+
+	// Output:
+	// Signalled
+	// Signalled
+	// Cancelled
 }
 
 func ExampleManualResetEvent() {
