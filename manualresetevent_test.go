@@ -1,43 +1,46 @@
 package syncx
 
 import (
+	"context"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-//TestManualResetEvent_1 ensures that Wait blocks if not signaled
-func TestManualResetEvent_1(t *testing.T) {
+func TestNewManualResetEvent(t *testing.T) {
+	e1 := NewManualResetEvent(false)
+	assertNotSignalled(t, e1)
+
+	e2 := NewManualResetEvent(true)
+	assertSignalled(t, e2)
+}
+
+func TestManualResetEvent_Signal(t *testing.T) {
 	e := NewManualResetEvent(false)
-
-	step := make(chan int, 1)
-	go func() {
-		step <- 1
-		e.Wait()
-		step <- 2
-	}()
-
-	<-step //1
 	e.Signal()
-	<-step //2
+	assertSignalled(t, e)
 }
 
-//TestManualResetEvent_2 ensures that Wait doesnt block if state is signaled
-func TestManualResetEvent_2(t *testing.T) {
+func TestManualResetEvent_Reset(t *testing.T) {
 	e := NewManualResetEvent(true)
-
-	step := make(chan int, 1)
-	go func() {
-		step <- 1
-		e.Wait()
-		step <- 2
-	}()
-
-	<-step //1
-	//e.Signal()
-	<-step //2
+	e.Reset()
+	assertNotSignalled(t, e)
 }
 
-//TestManualResetEvent_3 ensures that all waiting goroutines are awoken by a single call to Signal
-func TestManualResetEvent_3(t *testing.T) {
+func TestManualResetEvent_Wait_retainsSignal(t *testing.T) {
+	e := NewManualResetEvent(true)
+	e.Wait()
+	assertSignalled(t, e)
+}
+
+func TestManualResetEvent_WaitContext_retainsSignal(t *testing.T) {
+	e := NewManualResetEvent(true)
+	e.WaitContext(context.Background())
+	assertSignalled(t, e)
+}
+
+//ensures that all waiting goroutines are awoken by a single call to Signal
+func TestManualResetEvent_Signal_wakeAll(t *testing.T) {
 	e := NewManualResetEvent(false)
 
 	done := make(chan bool, 3)
@@ -55,30 +58,83 @@ func TestManualResetEvent_3(t *testing.T) {
 	}
 }
 
-/*
-func TestNewManualResetEvent_SetsState(t *testing.T) {
-	state := []bool{false, true}
-	for _, b := range state {
-		e := NewManualResetEvent(b)
-		assert.Equal(t, b, e.state)
-	}
-}
-
-func TestManualResetEvent_Signal_SetsStateToTrue(t *testing.T) {
+func TestManualResetEvent_Wait_nonsignalled(t *testing.T) {
 	e := NewManualResetEvent(false)
+
+	step := make(chan int, 1)
+	go func() {
+		step <- 1
+		e.Wait()
+		step <- 2
+	}()
+
+	<-step //1
 	e.Signal()
-	assert.True(t, e.state)
+	<-step //2
 }
 
-func TestManualResetEvent_Reset_SetsStateToFalse(t *testing.T) {
+func TestManualResetEvent_Wait_signalled(t *testing.T) {
 	e := NewManualResetEvent(true)
-	e.Reset()
-	assert.False(t, e.state)
+
+	step := make(chan int, 1)
+	go func() {
+		step <- 1
+		e.Wait()
+		step <- 2
+	}()
+
+	<-step //1
+	//e.Signal()
+	<-step //2
 }
 
-func TestManualResetEvent_Wait_LeavesStateAsTrue(t *testing.T) {
-	e := NewManualResetEvent(true)
-	e.Wait()
-	assert.True(t, e.state)
+func TestManualResetEvent_WaitContext_nonsignalled(t *testing.T) {
+	e := NewManualResetEvent(false)
+
+	step := make(chan int, 1)
+	go func() {
+		step <- 1
+		err := e.WaitContext(context.Background())
+		assert.Nil(t, err)
+		step <- 2
+	}()
+
+	<-step //1
+	e.Signal()
+	<-step //2
 }
-*/
+
+func TestManualResetEvent_WaitContext_signalled(t *testing.T) {
+	e := NewManualResetEvent(true)
+
+	step := make(chan int, 1)
+	go func() {
+		step <- 1
+		err := e.WaitContext(context.Background())
+		assert.Nil(t, err)
+		step <- 2
+	}()
+
+	<-step //1
+	//e.Signal()
+	<-step //2
+}
+
+func TestManualResetEvent_WaitContext_returnsCtxErrWhenCtxDone(t *testing.T) {
+	e := NewManualResetEvent(false)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	step := make(chan int, 1)
+	go func() {
+		step <- 1
+		err := e.WaitContext(ctx)
+		assert.NotNil(t, err)
+		assert.Equal(t, ctx.Err(), err)
+		step <- 2
+	}()
+
+	<-step //1
+	cancel()
+	<-step //2
+}

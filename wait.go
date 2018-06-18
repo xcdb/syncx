@@ -110,25 +110,30 @@ func WaitAll(whs ...WaitHandle) bool {
 		m = m | (1 << uint(i))
 	}
 
+	var i int
 	for {
 		select {
 		case <-cs[0]:
-			m = m &^ 1
+			i = 0
 		case <-cs[1]:
-			m = m &^ 2
+			i = 1
 		case <-cs[2]:
-			m = m &^ 4
+			i = 2
 		case <-cs[3]:
-			m = m &^ 8
+			i = 3
 		case <-cs[4]:
-			m = m &^ 16
+			i = 4
 		case <-cs[5]:
-			m = m &^ 32
+			i = 5
 		case <-cs[6]:
-			m = m &^ 64
+			i = 6
 		case <-cs[7]:
-			m = m &^ 128
+			i = 7
 		}
+
+		m = m &^ (1 << uint(i))
+		cs[i] = _Ø
+
 		if m == 0 {
 			return true
 		}
@@ -156,27 +161,32 @@ func WaitAllContext(ctx context.Context, whs ...WaitHandle) (bool, error) {
 		m = m | (1 << uint(i))
 	}
 
+	var i int
 	for {
 		select {
 		case <-ctx.Done():
 			return false, ctx.Err()
 		case <-cs[0]:
-			m = m &^ 1
+			i = 0
 		case <-cs[1]:
-			m = m &^ 2
+			i = 1
 		case <-cs[2]:
-			m = m &^ 4
+			i = 2
 		case <-cs[3]:
-			m = m &^ 8
+			i = 3
 		case <-cs[4]:
-			m = m &^ 16
+			i = 4
 		case <-cs[5]:
-			m = m &^ 32
+			i = 5
 		case <-cs[6]:
-			m = m &^ 64
+			i = 6
 		case <-cs[7]:
-			m = m &^ 128
+			i = 7
 		}
+
+		m = m &^ (1 << uint(i))
+		cs[i] = _Ø
+
 		if m == 0 {
 			return true, nil
 		}

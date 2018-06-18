@@ -11,13 +11,13 @@ import (
 
 func ExampleAutoResetEvent() {
 	//create event in a non-signaled state
-	e := syncx.NewAutoResetEvent(false)
+	a := syncx.NewAutoResetEvent(false)
 
 	//start a bunch of goroutines
 	for i := 1; i <= 3; i++ {
 		go func() {
 			//...
-			e.Wait()
+			a.Wait()
 			//...
 		}()
 	}
@@ -25,13 +25,13 @@ func ExampleAutoResetEvent() {
 	//...
 
 	//signal the event and release a goroutine
-	e.Signal()
+	a.Signal()
 
 	//release another
-	e.Signal()
+	a.Signal()
 
 	//release another
-	e.Signal()
+	a.Signal()
 
 	//...
 
@@ -44,14 +44,14 @@ func ExampleAutoResetEvent_WaitContext() {
 	done := make(chan bool, 3)
 
 	//create event in a non-signaled state
-	e := syncx.NewAutoResetEvent(false)
+	a := syncx.NewAutoResetEvent(false)
 
 	//start a bunch of goroutines
 	for i := 1; i <= 3; i++ {
 		go func() {
 			ready.Done()
 			//...
-			err := e.WaitContext(ctx)
+			err := a.WaitContext(ctx)
 			if err == nil {
 				fmt.Print("Signalled\n")
 			} else if err == context.Canceled { //ctx.Err()
@@ -65,10 +65,10 @@ func ExampleAutoResetEvent_WaitContext() {
 	ready.Wait()
 
 	//signal the event and release a goroutine
-	e.Signal()
+	a.Signal()
 
 	//release another
-	e.Signal()
+	a.Signal()
 
 	<-done
 	<-done
@@ -86,13 +86,13 @@ func ExampleAutoResetEvent_WaitContext() {
 
 func ExampleManualResetEvent() {
 	//create event in a non-signaled state
-	e := syncx.NewManualResetEvent(false)
+	m := syncx.NewManualResetEvent(false)
 
 	//start a bunch of goroutines
 	for i := 1; i <= 3; i++ {
 		go func() {
 			//...
-			e.Wait()
+			m.Wait()
 			//...
 		}()
 	}
@@ -100,7 +100,7 @@ func ExampleManualResetEvent() {
 	//...
 
 	//signal the event and release all goroutines
-	e.Signal()
+	m.Signal()
 
 	//...
 
@@ -173,33 +173,33 @@ func ExampleSemaphore() {
 }
 
 func ExampleWaitAny() {
-	e1 := syncx.NewAutoResetEvent(false)
-	e2 := syncx.NewManualResetEvent(false)
+	a := syncx.NewAutoResetEvent(false)
+	m := syncx.NewManualResetEvent(false)
 
 	//start a bunch of goroutines
 	for i := 1; i <= 5; i++ {
 		go func() {
 			//...
-			syncx.WaitAny(e1, e2)
+			syncx.WaitAny(a, m)
 			//...
 		}()
 	}
 
 	//signal the AutoResetevent, releasing a single goroutine
-	e1.Signal()
+	a.Signal()
 
 	//release another
-	e1.Signal()
+	a.Signal()
 
 	//signal the ManualResetEvent, releasing the remaining goroutines
-	e2.Signal()
+	m.Signal()
 
 	//...
 
 }
 
 func ExampleWaitAny_returnValue() {
-	e := syncx.NewManualResetEvent(false)
+	m := syncx.NewManualResetEvent(false)
 	s := syncx.NewSemaphore(3)
 
 	//start a bunch of goroutines
@@ -207,7 +207,7 @@ func ExampleWaitAny_returnValue() {
 	for i := 1; i <= 5; i++ {
 		go func() {
 			//...
-			ix := syncx.WaitAny(e, s)
+			ix := syncx.WaitAny(m, s)
 			//...
 
 			//if we consumed a resource from the semaphone, we need to release it
@@ -218,62 +218,62 @@ func ExampleWaitAny_returnValue() {
 	}
 
 	//signal the event, releasing all remaining goroutines
-	e.Signal()
+	m.Signal()
 
 	//...
 
 }
 
 func ExampleWaitAll() {
-	e1 := syncx.NewAutoResetEvent(false)
-	e2 := syncx.NewManualResetEvent(false)
+	a := syncx.NewAutoResetEvent(false)
+	m := syncx.NewManualResetEvent(false)
 	s := syncx.NewSemaphore(3)
 
 	//start a bunch of goroutines
 	for i := 1; i <= 5; i++ {
 		go func() {
 			//...
-			syncx.WaitAll(e1, e2, s)
+			syncx.WaitAll(a, m, s)
 			//...
 			s.Release()
 		}()
 	}
 
 	//signal the AutoResetEvent (nothing is released as all 3 waits are required)
-	e1.Signal()
+	a.Signal()
 
 	//signal the ManualResetEvent, releasing a single goroutine
-	e2.Signal()
+	m.Signal()
 
 	//signal the AutoResetEvent, releasing another goroutine
-	e1.Signal()
+	a.Signal()
 
 	//...
 
 }
 
 func ExampleWaitAll_semantics() {
-	e1 := syncx.NewAutoResetEvent(false)
-	e2 := syncx.NewManualResetEvent(false)
+	a := syncx.NewAutoResetEvent(false)
+	m := syncx.NewManualResetEvent(false)
 
 	//start a bunch of goroutines
 	for i := 1; i <= 5; i++ {
 		go func() {
 			//...
-			syncx.WaitAll(e1, e2)
+			syncx.WaitAll(a, m)
 			//...
 		}()
 	}
 
 	//signal the ManualResetEvent
-	e2.Signal()
+	m.Signal()
 
 	//set the ManualResetEvent to non-signalled
-	e2.Reset()
+	m.Reset()
 
 	//as the current implementation semantics are 'all have been signalled' this still releases a goroutine
 	//this behaviour should not be depended upon
-	e1.Signal()
+	a.Signal()
 
 	//...
 

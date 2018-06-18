@@ -32,31 +32,7 @@ func TestWaitAny(t *testing.T) {
 	<-step //2
 }
 
-func TestWaitAll(t *testing.T) {
-	e1 := syncx.NewAutoResetEvent(false)
-	e2 := syncx.NewManualResetEvent(false)
-	e3 := syncx.NewSemaphore(3)
-
-	step := make(chan int, 1)
-	go func() {
-		step <- 1
-		syncx.WaitAll(e1, e2, e3)
-		step <- 2
-	}()
-
-	<-step //1
-	e1.Signal()
-	e1.Signal() //checking that each only counts once
-	select {
-	case <-step:
-		assert.Fail(t, "shouldn't be signalled")
-	default:
-	}
-	e2.Signal()
-	<-step //2
-}
-
-func TestWaitAny_panicsWhenTooLong(t *testing.T) {
+func TestWaitAny_panicsWhenTooMany(t *testing.T) {
 	ws := make([]syncx.WaitHandle, 9, 9)
 	for i := 0; i < len(ws); i++ {
 		ws[i] = syncx.NewAutoResetEvent(false)
@@ -118,11 +94,9 @@ func TestWaitAnyContext_returnsIndexThatSatisfiedWait(t *testing.T) {
 
 func TestWaitAnyContext_returnsNegative1AndCtxErrWhenCancelled(t *testing.T) {
 	for l := 1; l <= 8; l++ {
-		es := make([]*syncx.AutoResetEvent, l, l)
 		ws := make([]syncx.WaitHandle, l, l)
 		for i := 0; i < l; i++ {
-			es[i] = syncx.NewAutoResetEvent(false)
-			ws[i] = es[i]
+			ws[i] = syncx.NewAutoResetEvent(false)
 		}
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()

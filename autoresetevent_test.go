@@ -1,6 +1,7 @@
 package syncx
 
 import (
+	"context"
 	"runtime"
 	"sync/atomic"
 	"testing"
@@ -9,40 +10,40 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//TestAutoResetEvent_1 ensures that Wait blocks if not signaled
-func TestAutoResetEvent_1(t *testing.T) {
+func TestNewAutoResetEvent(t *testing.T) {
+	e1 := NewAutoResetEvent(false)
+	assertNotSignalled(t, e1)
+
+	e2 := NewAutoResetEvent(true)
+	assertSignalled(t, e2)
+}
+
+func TestAutoResetEvent_Signal(t *testing.T) {
 	e := NewAutoResetEvent(false)
-
-	step := make(chan int, 1)
-	go func() {
-		step <- 1
-		e.Wait()
-		step <- 2
-	}()
-
-	<-step //1
 	e.Signal()
-	<-step //2
+	assertSignalled(t, e)
 }
 
-//TestAutoResetEvent_2 ensures that Wait doesnt block if state is signaled
-func TestAutoResetEvent_2(t *testing.T) {
+func TestAutoResetEvent_Reset(t *testing.T) {
 	e := NewAutoResetEvent(true)
-
-	step := make(chan int, 1)
-	go func() {
-		step <- 1
-		e.Wait()
-		step <- 2
-	}()
-
-	<-step //1
-	//e.Signal()
-	<-step //2
+	e.Reset()
+	assertNotSignalled(t, e)
 }
 
-//TestAutoResetEvent_3 ensures that Signal must be called once per goroutine
-func TestAutoResetEvent_3(t *testing.T) {
+func TestAutoResetEvent_Wait_resetsSignal(t *testing.T) {
+	e := NewAutoResetEvent(true)
+	e.Wait()
+	assertNotSignalled(t, e)
+}
+
+func TestAutoResetEvent_WaitContext_resetsSignal(t *testing.T) {
+	e := NewAutoResetEvent(true)
+	e.WaitContext(context.Background())
+	assertNotSignalled(t, e)
+}
+
+//ensures that Signal must be called once per goroutine
+func TestAutoResetEvent_Signal_wakeOne(t *testing.T) {
 	runtime.GOMAXPROCS(4)
 	var c int64
 
@@ -68,34 +69,105 @@ func TestAutoResetEvent_3(t *testing.T) {
 	}
 }
 
-//TODO: rename these to match implementation
+func TestAutoResetEvent_Wait_nonsignalled(t *testing.T) {
+	e := NewAutoResetEvent(false)
 
-func TestNewAutoResetEvent_SetsState(t *testing.T) {
-	state := []bool{false, true}
-	for _, b := range state {
-		e := NewAutoResetEvent(b)
-		s := len(e.c) == 1
-		assert.Equal(t, b, s)
+	step := make(chan int, 1)
+	go func() {
+		step <- 1
+		e.Wait()
+		step <- 2
+	}()
+
+	<-step //1
+	e.Signal()
+	<-step //2
+}
+
+func TestAutoResetEvent_Wait_signalled(t *testing.T) {
+	e := NewAutoResetEvent(true)
+
+	step := make(chan int, 1)
+	go func() {
+		step <- 1
+		e.Wait()
+		step <- 2
+	}()
+
+	<-step //1
+	//e.Signal()
+	<-step //2
+}
+
+func TestAutoResetEvent_WaitContext_nonsignalled(t *testing.T) {
+	e := NewAutoResetEvent(false)
+
+	step := make(chan int, 1)
+	go func() {
+		step <- 1
+		err := e.WaitContext(context.Background())
+		assert.Nil(t, err)
+		step <- 2
+	}()
+
+	<-step //1
+	e.Signal()
+	<-step //2
+}
+
+func TestAutoResetEvent_WaitContext_signalled(t *testing.T) {
+	e := NewAutoResetEvent(true)
+
+	step := make(chan int, 1)
+	go func() {
+		step <- 1
+		err := e.WaitContext(context.Background())
+		assert.Nil(t, err)
+		step <- 2
+	}()
+
+	<-step //1
+	//e.Signal()
+	<-step //2
+}
+
+func TestAutoResetEvent_WaitContext_returnsCtxErrWhenCtxDone(t *testing.T) {
+	e := NewAutoResetEvent(false)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	step := make(chan int, 1)
+	go func() {
+		step <- 1
+		err := e.WaitContext(ctx)
+		assert.NotNil(t, err)
+		assert.Equal(t, ctx.Err(), err)
+		step <- 2
+	}()
+
+	<-step //1
+	cancel()
+	<-step //2
+}
+
+//...
+
+//Warning: assertSignalled can potentially return w to non-signalled
+func assertSignalled(t *testing.T, w WaitHandle, msgAndArgs ...interface{}) {
+	select {
+	case <-w.ch():
+		return
+	default:
+		assert.Fail(t, "", msgAndArgs)
 	}
 }
 
-func TestAutoResetEvent_Signal_SetsStateToTrue(t *testing.T) {
-	e := NewAutoResetEvent(false)
-	e.Signal()
-	s := len(e.c) == 1
-	assert.True(t, s)
-}
-
-func TestAutoResetEvent_Reset_SetsStateToFalse(t *testing.T) {
-	e := NewAutoResetEvent(true)
-	e.Reset()
-	s := len(e.c) == 1
-	assert.False(t, s)
-}
-
-func TestAutoResetEvent_Wait_SetsStateToFalse(t *testing.T) {
-	e := NewAutoResetEvent(true)
-	e.Wait()
-	s := len(e.c) == 1
-	assert.False(t, s)
+//Warning: assertSignalled can potentially return w to non-signalled
+func assertNotSignalled(t *testing.T, w WaitHandle, msgAndArgs ...interface{}) {
+	select {
+	case <-w.ch():
+		assert.Fail(t, "", msgAndArgs)
+	default:
+		return
+	}
 }
