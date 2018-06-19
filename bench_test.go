@@ -94,7 +94,9 @@ func BenchmarkWaitAny_reflect1(b *testing.B) {
 	e[0].Signal()
 	for n := 0; n < b.N; n++ {
 		cases := make([]reflect.SelectCase, 1)
-		cases[0] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[0].ch())}
+		for i := 0; i < len(cases); i++ {
+			cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[i].ch())}
+		}
 		ix, _, _ = reflect.Select(cases)
 	}
 }
@@ -102,8 +104,9 @@ func BenchmarkWaitAny_reflect2(b *testing.B) {
 	e[1].Signal()
 	for n := 0; n < b.N; n++ {
 		cases := make([]reflect.SelectCase, 2)
-		cases[0] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[0].ch())}
-		cases[1] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[1].ch())}
+		for i := 0; i < len(cases); i++ {
+			cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[i].ch())}
+		}
 		ix, _, _ = reflect.Select(cases)
 	}
 }
@@ -111,9 +114,9 @@ func BenchmarkWaitAny_reflect3(b *testing.B) {
 	e[2].Signal()
 	for n := 0; n < b.N; n++ {
 		cases := make([]reflect.SelectCase, 3)
-		cases[0] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[0].ch())}
-		cases[1] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[1].ch())}
-		cases[2] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[2].ch())}
+		for i := 0; i < len(cases); i++ {
+			cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[i].ch())}
+		}
 		ix, _, _ = reflect.Select(cases)
 	}
 }
@@ -121,10 +124,9 @@ func BenchmarkWaitAny_reflect4(b *testing.B) {
 	e[3].Signal()
 	for n := 0; n < b.N; n++ {
 		cases := make([]reflect.SelectCase, 4)
-		cases[0] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[0].ch())}
-		cases[1] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[1].ch())}
-		cases[2] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[2].ch())}
-		cases[3] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[3].ch())}
+		for i := 0; i < len(cases); i++ {
+			cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[i].ch())}
+		}
 		ix, _, _ = reflect.Select(cases)
 	}
 }
@@ -132,14 +134,9 @@ func BenchmarkWaitAny_reflect8(b *testing.B) {
 	e[3].Signal()
 	for n := 0; n < b.N; n++ {
 		cases := make([]reflect.SelectCase, 8)
-		cases[0] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[0].ch())}
-		cases[1] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[1].ch())}
-		cases[2] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[2].ch())}
-		cases[3] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[3].ch())}
-		cases[4] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[4].ch())}
-		cases[5] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[5].ch())}
-		cases[6] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[6].ch())}
-		cases[7] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[7].ch())}
+		for i := 0; i < len(cases); i++ {
+			cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(e[i].ch())}
+		}
 		ix, _, _ = reflect.Select(cases)
 	}
 }
